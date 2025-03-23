@@ -213,29 +213,6 @@
             border-color: #4CAF50;
             background-color: #e8f5e9;
         }
-
-        @keyframes scaleEmoji {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        .purchase-confirmation {
-            animation: scaleEmoji 0.8s ease-out;
-            position: relative;
-        }
-
-        .sparkle {
-            position: absolute;
-            animation: sparkleFade 1s ease-out;
-            opacity: 0;
-            font-size: 20px;
-        }
-
-        @keyframes sparkleFade {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-50px); }
-        }
         .character-option.locked {
             opacity: 0.7;
             cursor: not-allowed;
@@ -341,7 +318,7 @@
         const eagleSpawnChance = 0.003;
         const eagleSpeed = 6;
         const eagleAttackSpeed = 8;
-        const eagleMinHeight = 150;
+        const eagleMinHeight = 30000;
         const eagleWarningDuration = 120; // Doubled warning duration (2 seconds)
         const eagleDodgeSpeed = 8; // Speed threshold for dodging the eagle
 
@@ -1376,24 +1353,6 @@
                 totalAcorns -= price;
                 purchasedCharacters.push(character);
                 localStorage.setItem('totalAcorns', totalAcorns);
-
-                // Add purchase animation
-                characterOption.classList.add('purchase-confirmation');
-                setTimeout(() => {
-                    characterOption.classList.remove('purchase-confirmation');
-                }, 1100);
-
-                // Add sparkle effects
-                const sparkles = ['✨', '🌟', '⭐️'];
-                sparkles.forEach((sparkle, i) => {
-                    const spark = document.createElement('div');
-                    spark.className = 'sparkle';
-                    spark.textContent = sparkle;
-                    spark.style.left = `${Math.random() * 100}%`;
-                    spark.style.animationDelay = `${i * 0.2}s`;
-                    characterOption.appendChild(spark);
-                    setTimeout(() => spark.remove(), 1000);
-                });
                 localStorage.setItem('purchasedCharacters', JSON.stringify(purchasedCharacters));
                 selectCharacter(character);
                 document.getElementById('totalAcorns').textContent = totalAcorns;
