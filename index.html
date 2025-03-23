@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<html>
+<head>
+    <title>Squirrel Jump</title>
+    <style>
+        canvas {
+            border: 2px solid #5d3a1a;
+            background-color: #87CEEB;  /* Sky blue background */
+            border-radius: 15px;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #2d5a27;  /* Forest green background */
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 1000;
+            width: 250px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: Arial, sans-serif;
+        }
+        .popup h2 {
+            margin-top: 0;
+            color: #2d5a27;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .popup button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 0;
+            font-size: 20px;
+            transition: background-color 0.3s;
+        }
+        .popup button:hover {
+            background-color: #45a049;
+        }
+        .popup .hint-text {
+            color: #999;
+            font-size: 14px;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+        .popup .score-text {
+            font-size: 18px;
+            margin: 10px 0;
+            line-height: 1.5;
+            color: #2d5a27;
+        }
+        .popup .total-acorns {
+            color: #666;
+            font-size: 16px;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        #pauseOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        #pauseText {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #startScreen {
+            display: block;  /* Start visible */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #87CEEB;  /* Match the game's sky blue background */
+            z-index: 1000;
+            overflow: hidden;  /* Ensure content doesn't overflow */
+        }
+        #startContent {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #2d5a27;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            border-radius: 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 500px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 1;
+        }
+        #startContent h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #2d5a27;
+        }
+        #startContent .trees {
+            font-size: 40px;
+            margin: 10px 0;
+            letter-spacing: 10px;
+        }
+        #startContent p {
+            font-size: 18px;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        #startContent button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 20px;
+            transition: background-color 0.3s;
+            width: 200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #startContent button.store-button {
+            background-color: #FF8C00;
+        }
+        #startContent button:hover {
+            background-color: #45a049;
+        }
+        #startContent button.store-button:hover {
+            background-color: #FF6B00;
+        }
+        .side-trees {
+            position: absolute;  /* Changed from fixed to absolute */
+            font-size: 120px;  /* Reduced size to fit in box */
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.2;  /* More transparent to not interfere with text */
+        }
+        .left-tree {
+            left: 10px;
+        }
+        .right-tree {
+            right: 10px;
+        }
+        .big-squirrel {
+            font-size: 100px;
+            margin-bottom: 20px;
+            line-height: 1;
+        }
+        .popup .menu-button {
+            color: #666;
+            background: none;
+            border: none;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 5px;
+            text-decoration: underline;
+        }
+        .popup .menu-button:hover {
+            color: #444;
+        }
+        .character-option {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .character-option:hover {
+            border-color: #4CAF50;
+            background-color: #f5f5f5;
+        }
+        .character-option.selected {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+
+        @keyframes scaleEmoji {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .purchase-confirmation {
+            animation: scaleEmoji 0.8s ease-out;
+            position: relative;
+        }
+
+        .sparkle {
+            position: absolute;
+            animation: sparkleFade 1s ease-out;
+            opacity: 0;
+            font-size: 20px;
+        }
+
+        @keyframes sparkleFade {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
+        .character-option.locked {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="startScreen">
+        <div id="startContent">
+            <div class="big-squirrel">🐿️</div>
+            <h1>Squirrel Jump</h1>
+            <p>Help the squirrel climb higher!</p>
+            <p>Use your mouse to move left and right</p>
+            <p>Jump on branches to go up</p>
+            <p>Press SPACE to pause the game</p>
+            <p>Don't fall down!</p>
+            <button onclick="startGame()">Start Game</button>
+            <button onclick="openStore()" style="background-color: #45a049; margin-top: 10px;">Store 🌰</button>
+        </div>
+    </div>
+    <div id="gameOverPopup" class="popup" style="display: none;">
+        <div>
+            <h2>Game Over!</h2>
+            <p class="score-text">Height: <span id="finalScore">0</span></p>
+            <p class="score-text">Acorns: <span id="finalAcorns">0</span> 🌰</p>
+            <button onclick="startGame()">Play Again (Enter)</button>
+        </div>
+        <div>
+            <p class="total-acorns">Total Acorns: <span id="totalAcorns">0</span> 🌰</p>
+            <button class="menu-button" onclick="restartGame()">Return to Menu</button>
+        </div>
+    </div>
+    <div id="storePopup" class="popup" style="display: none;">
+        <div>
+            <h2>Store</h2>
+            <div id="characters" style="display: flex; flex-direction: column; gap: 10px; margin: 20px 0;">
+                <div class="character-option" onclick="selectCharacter('🐿️')" data-price="0">
+                    <span style="font-size: 40px;">🐿️</span>
+                    <span>Default (Free)</span>
+                </div>
+                <div class="character-option" onclick="tryPurchaseCharacter('🦫')" data-price="50">
+                    <span style="font-size: 40px;">🦫</span>
+                    <span>50 🌰</span>
+                </div>
+                <div class="character-option" onclick="tryPurchaseCharacter('🦝')" data-price="100">
+                    <span style="font-size: 40px;">🦝</span>
+                    <span>100 🌰</span>
+                </div>
+                <div class="character-option" onclick="tryPurchaseCharacter('🐇')" data-price="150">
+                    <span style="font-size: 40px;">🐇</span>
+                    <span>150 🌰</span>
+                </div>
+            </div>
+            <button class="menu-button" onclick="closeStore()">Close</button>
+        </div>
+    </div>
+
+    <div id="pauseOverlay">
+        <div id="pauseText">
+            PAUSED<br><br>
+            Press SPACE to resume
+        </div>
+    </div>
+
+    <script>
+        // Game state variables
+        let isGameRunning = false;
+        let isPaused = false;
+        let score = 0;
+        let platforms = [];
+        let player = null;
+        let gameLoop = null;
+        let canvas = null;
+        let ctx = null;
+        let collectEffects = [];
+        let timestamp = 0;
+        let backgroundLeaves = [];
+        const maxBackgroundLeaves = 5;
+        let clouds = [];
+        let totalAcorns = parseInt(localStorage.getItem('totalAcorns')) || 0;
+        let purchasedCharacters = JSON.parse(localStorage.getItem('purchasedCharacters')) || ['🐿️'];
+        let selectedCharacter = localStorage.getItem('selectedCharacter') || '🐿️';
+        let eagle = null;
+        let eagleWarning = null;  // Add eagle warning state
+        let eagleAttackCooldown = 0;  // Global cooldown for eagle attacks
+        
+        // Constants
+        const platformWidth = 100;
+        const platformHeight = 15;
+        const minPlatformSpacing = 80;
+        const maxPlatformSpacing = 120;
+        const gravity = 0.3;
+        const jumpForce = -12;
+        // Calculate max jump height: h = v0^2/(2g) where v0 is initial velocity (jumpForce)
+        const maxJumpHeight = (jumpForce * jumpForce) / (2 * gravity);
+        const acornChance = 0.15;
+        const breakingBranchChance = 0.1;
+        const jumpGraceTime = 5;
+        const movingPlatformStartScore = 100;
+        const movingPlatformChance = 0.2;
+        const platformMoveSpeed = 1.2;
+        const eagleSpawnChance = 0.003;
+        const eagleSpeed = 6;
+        const eagleAttackSpeed = 8;
+        const eagleMinHeight = 150;
+        const eagleWarningDuration = 120; // Doubled warning duration (2 seconds)
+        const eagleDodgeSpeed = 8; // Speed threshold for dodging the eagle
+
+        // Initialize game
+        function initGame() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+
+            // Initialize player
+            player = {
+                x: canvas.width / 2,
+                y: canvas.height - 50,
+                width: 40,
+                height: 40,
+                velocityY: 0,
+                speed: 10,
+                airSpeed: 16,
+                direction: 1,
+                acorns: 0,
+                jumpGrace: 0,
+                wasOnPlatform: false
+            };
+
+            // Set up event listeners
+            let mouseX = canvas.width / 2;
+            let targetX = mouseX;
+            let lastDirection = 1;
+            let directionChangeThreshold = 10;
+            let smoothingFactor = 0.25; // Increased from 0.1 to 0.25 for more responsive movement
+            
+            // Add cursor style to indicate playable area
+            canvas.style.cursor = 'none';
+            
+            document.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const newX = e.clientX - rect.left;
+                
+                // Only update if mouse is within canvas bounds
+                if (e.clientX >= rect.left && e.clientX <= rect.right) {
+                    targetX = Math.min(Math.max(newX, player.width/2), canvas.width - player.width/2);
+                }
+            });
+
+            // Handle mouse leaving canvas
+            document.addEventListener('mouseout', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                if (e.clientX < rect.left) {
+                    targetX = player.width/2;
+                } else if (e.clientX > rect.right) {
+                    targetX = canvas.width - player.width/2;
+                }
+            });
+
+            // Add touch support for mobile
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const newX = touch.clientX - rect.left;
+                targetX = Math.min(Math.max(newX, player.width/2), canvas.width - player.width/2);
+            }, { passive: false });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && isGameRunning) {
+                    e.preventDefault();
+                    isPaused = !isPaused;
+                    document.getElementById('pauseOverlay').style.display = isPaused ? 'block' : 'none';
+                    if (!isPaused) {
+                        requestAnimationFrame(gameLoop);
+                    }
+                }
+                // Add Enter key to restart game immediately when game over
+                if (e.code === 'Enter' && !isGameRunning && document.getElementById('gameOverPopup').style.display === 'block') {
+                    e.preventDefault();
+                    document.getElementById('gameOverPopup').style.display = 'none';
+                    startGame();
+                }
+            });
+
+            // Initialize clouds
+            clouds = [
+                // High layer (fastest)
+                { x: -20, baseY: 20, size: 110, alpha: 0.9, speedX: 0.4, amplitude: 3, phase: 0 },
+                { x: 120, baseY: 25, size: 95, alpha: 0.85, speedX: 0.4, amplitude: 4, phase: 2 },
+                { x: 260, baseY: 15, size: 120, alpha: 0.95, speedX: 0.4, amplitude: 3, phase: 4 },
+                
+                // Middle layer
+                { x: -40, baseY: 60, size: 85, alpha: 0.7, speedX: 0.3, amplitude: 5, phase: 1 },
+                { x: 140, baseY: 70, size: 75, alpha: 0.75, speedX: 0.3, amplitude: 6, phase: 3 },
+                { x: 320, baseY: 65, size: 90, alpha: 0.8, speedX: 0.3, amplitude: 4, phase: 5 },
+                
+                // Low layer (slowest)
+                { x: -60, baseY: 100, size: 65, alpha: 0.5, speedX: 0.2, amplitude: 7, phase: 2 },
+                { x: 100, baseY: 110, size: 70, alpha: 0.55, speedX: 0.2, amplitude: 8, phase: 4 },
+                { x: 260, baseY: 105, size: 60, alpha: 0.45, speedX: 0.2, amplitude: 6, phase: 6 }
+            ];
+
+            // Define game loop
+            gameLoop = function() {
+                if (!isGameRunning || isPaused) return;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Decrement eagle attack cooldown if active
+                if (eagleAttackCooldown > 0) {
+                    eagleAttackCooldown--;
+                }
+                
+                // Update timestamp for floating animations
+                timestamp += 1;
+
+                // Draw forest background
+                drawForestBackground();
+
+                // Spawn and update background leaves
+                spawnBackgroundLeaf();
+                
+                // Draw and update background leaves
+                backgroundLeaves = backgroundLeaves.filter(leaf => {
+                    // Update position
+                    leaf.x += leaf.speedX;
+                    leaf.y += leaf.speedY;
+                    leaf.rotation += leaf.rotationSpeed;
+
+                    // Draw leaf
+                    ctx.save();
+                    ctx.translate(leaf.x, leaf.y);
+                    ctx.rotate(leaf.rotation);
+                    ctx.font = '24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.globalAlpha = 1;
+                    ctx.fillText(leaf.leafType, 0, 0);
+                    ctx.restore();
+
+                    // Remove leaves that are off screen
+                    return leaf.y < canvas.height + 20;
+                });
+
+                // Update player position
+                player.velocityY += gravity;
+                
+                // Apply some air resistance when falling
+                if (player.velocityY > 0) {
+                    player.velocityY *= 0.99;
+                }
+                
+                player.y += player.velocityY;
+                player.jumpGrace--;  // Decrease grace period
+
+                // Track if player is on any platform this frame
+                let onPlatform = false;
+
+                // Check platform collisions and acorn collection
+                for (let platform of platforms) {
+                    if (checkCollision(player, platform)) {
+                        if (platform.isBreaking && !platform.broken) {
+                            platform.broken = true;
+                            // Create breaking effect
+                            for (let i = 0; i < 5; i++) {
+                                collectEffects.push({
+                                    x: platform.x + (platform.width * (i + 0.5) / 5),
+                                    y: platform.y,
+                                    life: 30,
+                                    text: '🪵',
+                                    velocityX: (Math.random() - 0.5) * 5,
+                                    velocityY: -5
+                                });
+                            }
+                        }
+                        if (!platform.broken) {
+                            onPlatform = true;
+                            if (!player.wasOnPlatform || player.jumpGrace > 0) {
+                                player.velocityY = jumpForce;
+                                if (!player.wasOnPlatform) {
+                                    // Play a more springing bounce sound when the squirrel jumps
+                                    const bounceContext = new (window.AudioContext || window.webkitAudioContext)();
+                                    const bounceOsc = bounceContext.createOscillator();
+                                    const bounceGain = bounceContext.createGain();
+                                    bounceOsc.type = "sawtooth";
+                                    bounceOsc.frequency.setValueAtTime(300, bounceContext.currentTime);
+                                    bounceOsc.frequency.linearRampToValueAtTime(800, bounceContext.currentTime + 0.05);
+                                    bounceOsc.frequency.exponentialRampToValueAtTime(400, bounceContext.currentTime + 0.25);
+                                    bounceGain.gain.setValueAtTime(0.02, bounceContext.currentTime);
+                                    bounceGain.gain.exponentialRampToValueAtTime(0.001, bounceContext.currentTime + 0.25);
+                                    bounceOsc.connect(bounceGain);
+                                    bounceGain.connect(bounceContext.destination);
+                                    bounceOsc.start();
+                                    bounceOsc.stop(bounceContext.currentTime + 0.25);
+                                }
+                            }
+                            player.jumpGrace = jumpGraceTime;
+                        }
+                    }
+                    
+                    // Check for acorn collection
+                    if (platform.hasAcorn && !platform.acornCollected) {
+                        if (checkAcornCollision(player, platform)) {
+                            platform.acornCollected = true;
+                            player.acorns++;
+                            collectEffects.push({
+                                x: platform.x + platform.width/2,
+                                y: platform.y - 15,
+                                life: 30,
+                                text: '🌰',
+                                velocityX: 0,
+                                velocityY: -2
+                            });
+                            const context = new (window.AudioContext || window.webkitAudioContext)();
+                            const o1 = context.createOscillator();
+                            const o2 = context.createOscillator();
+                            const g1 = context.createGain();
+                            const g2 = context.createGain();
+                            o1.type = "sine";
+                            o2.type = "sine";
+                            o1.frequency.value = 880;
+                            o2.frequency.value = 1100;
+                            g1.gain.setValueAtTime(0.1, context.currentTime);
+                            g2.gain.setValueAtTime(0.1, context.currentTime);
+                            o1.connect(g1);
+                            o2.connect(g2);
+                            const merger = context.createGain();
+                            g1.connect(merger);
+                            g2.connect(merger);
+                            merger.connect(context.destination);
+                            o1.start();
+                            o2.start();
+                            g1.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+                            g2.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+                            o1.stop(context.currentTime + 0.5);
+                            o2.stop(context.currentTime + 0.5);
+                        }
+                    }
+                }
+
+                // Update platform state
+                player.wasOnPlatform = onPlatform;
+
+                // Smooth movement using lerp
+                mouseX = mouseX + (targetX - mouseX) * smoothingFactor;
+                player.x = mouseX - player.width/2;
+
+                // Update direction only on significant movement
+                if (Math.abs(targetX - mouseX) > directionChangeThreshold) {
+                    const newDirection = targetX > mouseX ? 1 : -1;
+                    if (newDirection !== player.direction) {
+                        player.direction = newDirection;
+                    }
+                }
+
+                // Screen wrapping for player
+                if (player.x > canvas.width) {
+                    player.x = 0;
+                } else if (player.x < 0) {
+                    player.x = canvas.width;
+                }
+
+                // Move platforms down when player goes up
+                if (player.y < canvas.height / 2) {
+                    player.y = canvas.height / 2;
+                    let hasStablePlatform = false;  // Track if we have a stable platform
+                    let platformsToUpdate = [];  // Store platforms that need updating
+                    let lastStablePlatformY = canvas.height;  // Track the last stable platform's Y position
+
+                    // First pass: identify platforms that need updating and find last stable platform
+                    for (let platform of platforms) {
+                        platform.y += -player.velocityY;
+                        if (platform.y > canvas.height && !platform.isGrass) {
+                            platformsToUpdate.push(platform);
+                    } else if (!platform.broken && (!platform.isBreaking || platform.isGrass)) {
+                            hasStablePlatform = true;
+                            if (platform.y < lastStablePlatformY) {
+                                lastStablePlatformY = platform.y;
+                            }
+                        }
+                    }
+
+                    if (platformsToUpdate.length > 0) {
+                        // Find the highest platform
+                        let highestY = canvas.height;
+                        for (let p of platforms) {
+                            if (p.y < highestY) highestY = p.y;
+                        }
+
+                        // Update platforms that went off screen
+                        for (let platform of platformsToUpdate) {
+                            const newPlatform = createPlatform(false);
+                            platform.x = newPlatform.x;
+                            
+                            // Ensure the new platform is within jumping reach
+                            const minSpacing = minPlatformSpacing;
+                            const maxSpacing = Math.min(maxPlatformSpacing, maxJumpHeight * 0.8);
+                            const spacing = minSpacing + Math.random() * (maxSpacing - minSpacing);
+                            platform.y = highestY - spacing;
+
+                            platform.width = platformWidth;
+                            platform.leaves = newPlatform.leaves;
+                            platform.barkTexture = newPlatform.barkTexture;
+                            platform.twigs = newPlatform.twigs;
+                            platform.hasAcorn = Math.random() < acornChance;
+                            platform.acornCollected = false;
+                            
+                            // If we don't have a stable platform yet OR the distance to the last stable platform
+                            // is too large, force this one to be stable
+                            const distanceToLastStable = Math.abs(platform.y - lastStablePlatformY);
+                            if (!hasStablePlatform || distanceToLastStable > maxJumpHeight * 0.8) {
+                                platform.isBreaking = false;
+                                hasStablePlatform = true;
+                                lastStablePlatformY = platform.y;
+                            } else {
+                                platform.isBreaking = Math.random() < breakingBranchChance;
+                            }
+                            
+                            platform.broken = false;
+                            platform.isMoving = score >= movingPlatformStartScore && Math.random() < movingPlatformChance;
+                            platform.moveDirection = 1;
+                            platform.originalX = platform.x;
+                            score++;
+
+                            highestY = platform.y; // Update highestY for next platform
+                        }
+                    }
+                }
+
+                // Update moving platforms
+                for (let platform of platforms) {
+                    if (platform.isMoving && !platform.broken) {
+                        platform.x += platformMoveSpeed * platform.moveDirection;
+                        if (platform.moveDirection > 0 && platform.x > platform.originalX + 100) {
+                            platform.moveDirection = -1;
+                        } else if (platform.moveDirection < 0 && platform.x < platform.originalX - 100) {
+                            platform.moveDirection = 1;
+                        }
+                    }
+                }
+
+                // Handle eagle spawning and movement
+                if (score >= eagleMinHeight && eagleAttackCooldown <= 0) {
+                    // Handle eagle warning
+                    if (!eagle && !eagleWarning && Math.random() < eagleSpawnChance) {
+                        // Start warning before spawning eagle
+                        eagleWarning = {
+                            timer: eagleWarningDuration,
+                            side: Math.random() < 0.5 ? 'left' : 'right',
+                            cooldown: false
+                        };
+                    }
+                }
+
+                // Update eagle warning if active
+                if (eagleWarning) {
+                    eagleWarning.timer--;
+                    
+                    // Only show warning indicators if not in cooldown
+                    if (!eagleWarning.cooldown) {
+                        // Draw warning indicator
+                        ctx.save();
+                        // Flash effect - opacity varies with sine wave
+                        ctx.globalAlpha = Math.abs(Math.sin(eagleWarning.timer * 0.2));
+                        ctx.font = '40px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#FF0000';
+                        
+                        // Position warning on the side where eagle will appear
+                        const x = eagleWarning.side === 'left' ? 40 : canvas.width - 40;
+                        ctx.fillText('⚠️', x, 100);
+                        ctx.font = '20px Arial';
+                        ctx.fillText('🦅', x, 130);
+                        
+                        // Add "MOVE!" text that appears in last second
+                        if (eagleWarning.timer < 60) {
+                            ctx.font = '24px Arial';
+                            ctx.fillStyle = '#FF0000';
+                            ctx.fillText('MOVE!', x, 160);
+                        }
+                        
+                        ctx.restore();
+                    }
+
+                    // When warning is done
+                    if (eagleWarning.timer <= 0) {
+                        if (eagleWarning.cooldown) {
+                            // If this was a cooldown period, just clear the warning
+                            eagleWarning = null;
+                        } else {
+                            // Spawn new eagle
+                            eagle = {
+                                x: eagleWarning.side === 'left' ? -50 : canvas.width + 50,
+                                y: canvas.height/3 + Math.random() * (canvas.height/3),
+                                width: 60,
+                                height: 60,
+                                direction: eagleWarning.side === 'left' ? 1 : -1,
+                                state: 'patrolling',
+                                attackTimer: 0,
+                                lastPlayerX: 0,
+                                dodged: false
+                            };
+                            eagleWarning = null;
+                        }
+                    }
+                }
+
+                if (eagle) {
+                    if (eagle.state === 'patrolling') {
+                        // Move eagle horizontally with slight vertical movement
+                        eagle.x += eagleSpeed * eagle.direction;
+                        eagle.y += Math.sin(timestamp * 0.02) * 2;
+
+                        // Check if eagle should start attacking
+                        const distanceToPlayer = Math.abs(eagle.x - player.x);
+                        if (distanceToPlayer < 150 && eagle.y < player.y) {
+                            eagle.state = 'preparing';
+                            eagle.lastPlayerX = player.x; // Store player's position
+                            eagle.prepareTimer = 30; // Half second preparation before attack
+                        }
+
+                        // Wrap eagle around screen
+                        if (eagle.x > canvas.width + 50) {
+                            eagle.x = -50;
+                        } else if (eagle.x < -50) {
+                            eagle.x = canvas.width + 50;
+                        }
+                    } else if (eagle.state === 'preparing') {
+                        // Hover and telegraph attack
+                        eagle.prepareTimer--;
+                        
+                        // Draw targeting indicator
+                        ctx.save();
+                        ctx.strokeStyle = '#FF0000';
+                        ctx.setLineDash([5, 5]);
+                        ctx.beginPath();
+                        ctx.moveTo(eagle.x, eagle.y);
+                        ctx.lineTo(eagle.lastPlayerX, player.y);
+                        ctx.stroke();
+                        ctx.restore();
+                        
+                        if (eagle.prepareTimer <= 0) {
+                            eagle.state = 'attacking';
+                            eagle.targetX = eagle.lastPlayerX;
+                            eagle.targetY = player.y;
+                            eagle.initialX = eagle.x;
+                            eagle.initialY = eagle.y;
+                            eagle.attackTimer = 0;
+                            eagle.controlPoint1 = {
+                                x: eagle.x + (eagle.lastPlayerX - eagle.x) * 0.3,
+                                y: eagle.y + (player.y - eagle.y) * 0.3 - 50
+                            };
+                            eagle.controlPoint2 = {
+                                x: eagle.x + (eagle.lastPlayerX - eagle.x) * 0.7,
+                                y: eagle.y + (player.y - eagle.y) * 0.7 - 50
+                            };
+                        }
+                    } else if (eagle.state === 'attacking') {
+                        eagle.attackTimer += 0.015;
+                        const progress = Math.min(1, eagle.attackTimer);
+                        
+                        // Calculate position along Bezier curve
+                        const t = progress;
+                        const mt = 1 - t;
+                        eagle.x = mt*mt*mt*eagle.initialX + 
+                                3*mt*mt*t*eagle.controlPoint1.x +
+                                3*mt*t*t*eagle.controlPoint2.x +
+                                t*t*t*eagle.targetX;
+                        
+                        eagle.y = mt*mt*mt*eagle.initialY +
+                                3*mt*mt*t*eagle.controlPoint1.y +
+                                3*mt*t*t*eagle.controlPoint2.y +
+                                t*t*t*eagle.targetY;
+
+                        // Check if player has moved fast enough to dodge
+                        const playerMovementSpeed = Math.abs(player.x - eagle.lastPlayerX);
+                        if (!eagle.dodged && playerMovementSpeed > eagleDodgeSpeed) {
+                            eagle.dodged = true;
+                        }
+
+                        // Check for collision with player
+                        if (Math.abs(eagle.x - player.x) < 40 && Math.abs(eagle.y - player.y) < 40) {
+                            if (!eagle.dodged) {
+                                // Game over only if player hasn't dodged
+                                isGameRunning = false;
+                                totalAcorns += player.acorns;
+                                localStorage.setItem('totalAcorns', totalAcorns);
+                                document.getElementById('finalScore').textContent = score;
+                                document.getElementById('finalAcorns').textContent = player.acorns;
+                                document.getElementById('totalAcorns').textContent = totalAcorns;
+                                document.getElementById('gameOverPopup').style.display = 'block';
+                                // Set cooldown and clear eagle
+                                eagleAttackCooldown = eagleWarningDuration * 2;
+                                eagle = null;
+                                return;
+                            }
+                        }
+
+                        // If attack is complete or eagle is off screen, end attack and set cooldown
+                        if (progress >= 1 || 
+                            eagle.x < -100 || 
+                            eagle.x > canvas.width + 100 || 
+                            eagle.y > canvas.height + 100) {
+                            // Set cooldown and clear eagle
+                            eagleAttackCooldown = eagleWarningDuration * 2;
+                            eagle = null;
+                            return;
+                        }
+                    }
+
+                    // Only draw eagle if it still exists
+                    if (eagle) {
+                        // Draw eagle with rotation based on movement
+                        ctx.save();
+                        ctx.font = '60px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        // Calculate rotation based on movement direction
+                        if (eagle.state === 'attacking') {
+                            const dx = eagle.x - (eagle.prevX || eagle.x);
+                            const dy = eagle.y - (eagle.prevY || eagle.y);
+                            const angle = Math.atan2(dy, dx);
+                            
+                            ctx.translate(eagle.x, eagle.y);
+                            ctx.rotate(angle);
+                            ctx.translate(-eagle.x, -eagle.y);
+                        }
+                        
+                        if (eagle.direction === -1) {
+                            ctx.scale(-1, 1);
+                            ctx.fillText('🦅', -eagle.x, eagle.y);
+                        } else {
+                            ctx.fillText('🦅', eagle.x, eagle.y);
+                        }
+                        
+                        // Store previous position for next frame's rotation calculation
+                        eagle.prevX = eagle.x;
+                        eagle.prevY = eagle.y;
+                        
+                        ctx.restore();
+                    }
+                }
+
+                // Game over condition
+                if (player.y > canvas.height) {
+                    isGameRunning = false;
+                    totalAcorns += player.acorns;
+                    localStorage.setItem('totalAcorns', totalAcorns);
+                    document.getElementById('finalScore').textContent = score;
+                    document.getElementById('finalAcorns').textContent = player.acorns;
+                    document.getElementById('totalAcorns').textContent = totalAcorns;
+                    document.getElementById('gameOverPopup').style.display = 'block';
+                    return;
+                }
+
+                // Draw collection effects
+                collectEffects = collectEffects.filter(effect => {
+                    effect.life -= 1;
+                    if (effect.life > 0) {
+                        if (effect.velocityX) effect.x += effect.velocityX;
+                        if (effect.velocityY) {
+                            effect.y += effect.velocityY;
+                            effect.velocityY += 0.2;  // Add gravity to falling pieces
+                        }
+                        ctx.save();
+                        ctx.font = '20px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.globalAlpha = effect.life / 30;
+                        ctx.fillText(effect.text, effect.x, effect.y);
+                        ctx.restore();
+                        return true;
+                    }
+                    return false;
+                });
+
+                // Draw platforms (branches)
+                for (let platform of platforms) {
+                    drawBranch(platform);
+                }
+
+                // Draw player (squirrel)
+                drawSquirrel(player);
+
+                // Draw score and acorn count
+                ctx.fillStyle = '#2d5a27';
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText('Height: ' + score, 10, 30);
+                ctx.fillText('🌰: ' + player.acorns, 10, 60);  // Display acorn count
+
+                requestAnimationFrame(gameLoop);
+            };
+        }
+
+        function drawSquirrel(player) {
+            ctx.save();
+            ctx.font = '60px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // If moving left, flip the emoji
+            if (player.direction === -1) {
+                ctx.scale(-1, 1);
+                ctx.fillText(selectedCharacter, -(player.x + player.width/2), player.y + player.height/2);
+            } else {
+                ctx.fillText(selectedCharacter, player.x + player.width/2, player.y + player.height/2);
+            }
+            
+            ctx.restore();
+        }
+
+        function drawBranch(platform) {
+            // Don't draw anything if the branch is broken
+            if (platform.broken) return;
+            
+            ctx.save();
+            
+            if (platform.isGrass) {
+                // Draw grass platform extending below screen and to the sides
+                ctx.beginPath();
+                ctx.moveTo(-100, platform.y + platform.height/2); // Extend further left
+                ctx.lineTo(platform.width + 100, platform.y + platform.height/2); // Extend further right
+                ctx.lineWidth = platform.height + 100; // Reduced height to make bushes extend above
+                ctx.strokeStyle = '#458B00';
+                ctx.stroke();
+
+                // Draw dense bush clusters
+                ctx.font = '80px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                
+                // Left side bush cluster - multiple layers
+                ctx.save();
+                // Back layer (highest)
+                ctx.globalAlpha = 0.7;
+                ctx.fillText('🌳', -80, platform.y - 20);
+                ctx.fillText('🌳', -20, platform.y - 15);
+                ctx.fillText('🌳', platform.x + 40, platform.y - 10);
+                ctx.fillText('🌳', -50, platform.y - 18);
+                ctx.fillText('🌳', platform.x + 10, platform.y - 12);
+                
+                // Middle layer
+                ctx.globalAlpha = 0.85;
+                ctx.fillText('🌳', -60, platform.y + 20);
+                ctx.fillText('🌳', platform.x + 20, platform.y + 25);
+                ctx.fillText('🌳', platform.x + 80, platform.y + 15);
+                ctx.fillText('🌳', -30, platform.y + 22);
+                ctx.fillText('🌳', platform.x + 50, platform.y + 18);
+                
+                // Front layer
+                ctx.globalAlpha = 1;
+                ctx.fillText('🌳', -40, platform.y + 60);
+                ctx.fillText('🌳', platform.x + 50, platform.y + 65);
+                ctx.fillText('🌳', platform.x + 100, platform.y + 55);
+                ctx.fillText('🌳', -10, platform.y + 62);
+                ctx.fillText('🌳', platform.x + 70, platform.y + 58);
+
+                // Bottom layer
+                ctx.globalAlpha = 0.9;
+                ctx.fillText('🌳', -70, platform.y + 90);
+                ctx.fillText('🌳', platform.x + 30, platform.y + 95);
+                ctx.fillText('🌳', platform.x + 90, platform.y + 85);
+                ctx.fillText('🌳', -25, platform.y + 92);
+                ctx.fillText('🌳', platform.x + 60, platform.y + 88);
+                ctx.restore();
+                
+                // Right side bush cluster - multiple layers
+                ctx.save();
+                // Back layer (highest)
+                ctx.globalAlpha = 0.7;
+                ctx.fillText('🌳', platform.width + 80, platform.y - 20);
+                ctx.fillText('🌳', platform.width + 20, platform.y - 15);
+                ctx.fillText('🌳', platform.x + platform.width - 40, platform.y - 10);
+                ctx.fillText('🌳', platform.width + 50, platform.y - 18);
+                ctx.fillText('🌳', platform.x + platform.width - 10, platform.y - 12);
+                
+                // Middle layer
+                ctx.globalAlpha = 0.85;
+                ctx.fillText('🌳', platform.width + 60, platform.y + 20);
+                ctx.fillText('🌳', platform.x + platform.width - 20, platform.y + 25);
+                ctx.fillText('🌳', platform.x + platform.width - 80, platform.y + 15);
+                ctx.fillText('🌳', platform.width + 30, platform.y + 22);
+                ctx.fillText('🌳', platform.x + platform.width - 50, platform.y + 18);
+                
+                // Front layer
+                ctx.globalAlpha = 1;
+                ctx.fillText('🌳', platform.width + 40, platform.y + 60);
+                ctx.fillText('🌳', platform.x + platform.width - 50, platform.y + 65);
+                ctx.fillText('🌳', platform.x + platform.width - 100, platform.y + 55);
+                ctx.fillText('🌳', platform.width + 10, platform.y + 62);
+                ctx.fillText('🌳', platform.x + platform.width - 70, platform.y + 58);
+                
+                // Bottom layer
+                ctx.globalAlpha = 0.9;
+                ctx.fillText('🌳', platform.width + 70, platform.y + 90);
+                ctx.fillText('🌳', platform.x + platform.width - 30, platform.y + 95);
+                ctx.fillText('🌳', platform.x + platform.width - 90, platform.y + 85);
+                ctx.fillText('🌳', platform.width + 25, platform.y + 92);
+                ctx.fillText('🌳', platform.x + platform.width - 60, platform.y + 88);
+                ctx.restore();
+            } else if (platform.isBreaking) {
+                // Draw left piece
+                const crackX = platform.x + platform.width * 0.4;
+                const gapWidth = 6;
+                
+                // Left piece
+                ctx.beginPath();
+                ctx.moveTo(platform.x, platform.y + platform.height/2);
+                ctx.bezierCurveTo(
+                    platform.x + platform.width * 0.2, platform.y + platform.height * 0.3,
+                    crackX - gapWidth, platform.y + platform.height * 0.7,
+                    crackX - gapWidth, platform.y + platform.height/2
+                );
+                ctx.lineWidth = platform.height * 0.5; // Make breaking platforms even thinner (was 0.7)
+                ctx.strokeStyle = '#A0522D';
+                ctx.stroke();
+
+                // Right piece
+                ctx.beginPath();
+                ctx.moveTo(crackX + gapWidth, platform.y + platform.height/2);
+                ctx.bezierCurveTo(
+                    crackX + gapWidth, platform.y + platform.height * 0.3,
+                    platform.x + platform.width * 0.9, platform.y + platform.height * 0.7,
+                    platform.x + platform.width, platform.y + platform.height/2
+                );
+                ctx.stroke();
+            } else {
+                // Draw normal branch
+                ctx.beginPath();
+                ctx.moveTo(platform.x, platform.y + platform.height/2);
+                ctx.bezierCurveTo(
+                    platform.x + platform.width * 0.2, platform.y + platform.height * 0.3,
+                    platform.x + platform.width * 0.8, platform.y + platform.height * 0.7,
+                    platform.x + platform.width, platform.y + platform.height/2
+                );
+                ctx.lineWidth = platform.height;
+                ctx.strokeStyle = '#6B4423';
+                ctx.stroke();
+            }
+
+            // Only draw bark texture and twigs for normal branches
+            if (!platform.isBreaking && !platform.isGrass) {
+                // Draw bark texture using stored positions
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#4A2511';
+                for(let bark of platform.barkTexture) {
+                    ctx.beginPath();
+                    ctx.moveTo(platform.x + bark.x, platform.y);
+                    ctx.lineTo(platform.x + bark.x + bark.offset, platform.y + platform.height);
+                    ctx.stroke();
+                }
+
+                // Draw twigs using stored positions
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#5D2A12';
+                for(let twig of platform.twigs) {
+                    let twigX = platform.x + (platform.width * twig.xOffset);
+                    let twigY = platform.y + platform.height/2;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(twigX, twigY);
+                    ctx.lineTo(twigX + twig.dx, twigY + twig.dy);
+                    ctx.stroke();
+                }
+            }
+
+            // Only draw leaves for normal branches
+            if (!platform.isGrass) {
+                // Draw leaves using stored leaf data
+                for(let leaf of platform.leaves) {
+                    let leafX = platform.x + (platform.width * leaf.x);
+                    let leafY = platform.y + platform.height/2;
+                    
+                    // Draw top leaf
+                    drawLeaf(
+                        leafX + leaf.offsetX,
+                        leafY - platform.height/2,
+                        leaf.topAngle,
+                        leaf.topSize
+                    );
+                    
+                    // Draw bottom leaf
+                    drawLeaf(
+                        leafX + leaf.offsetX,
+                        leafY + platform.height/2,
+                        leaf.bottomAngle,
+                        leaf.bottomSize
+                    );
+                }
+            }
+            
+            // Draw acorn if platform has one and it hasn't been collected
+            if (platform.hasAcorn && !platform.acornCollected) {
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const floatOffset = Math.sin(timestamp * 0.08) * 8;
+                ctx.fillText('🌰', platform.x + platform.width/2, platform.y - 15 + floatOffset);
+            }
+            
+            ctx.restore();
+        }
+
+        // Function to draw a leaf
+        function drawLeaf(x, y, angle, size) {
+            if (size === 0) return;  // Don't draw if size is 0
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            
+            // Draw leaf shape
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(
+                size/2, -size/2,
+                size, -size/4,
+                size, 0
+            );
+            ctx.bezierCurveTo(
+                size, size/4,
+                size/2, size/2,
+                0, 0
+            );
+            
+            // Fill with gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, 0);
+            gradient.addColorStop(0, '#2d5a27');
+            gradient.addColorStop(1, '#355e2e');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Add vein
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(size * 0.8, 0);
+            ctx.strokeStyle = '#2d5a27';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function createPlatform(isFirst = false, yPosition = 0) {
+            let xPosition;
+            if (isFirst) {
+                xPosition = 0;
+                // Return a grass platform for the first platform
+                return {
+                    x: xPosition,
+                    y: yPosition,
+                    width: canvas.width,
+                    height: platformHeight,
+                    isGrass: true,
+                    hasAcorn: false,
+                    acornCollected: false,
+                    isBreaking: false,
+                    broken: false,
+                    isMoving: false,
+                    leaves: [],
+                    barkTexture: [],
+                    twigs: []
+                };
+            } else {
+                const section = Math.floor(Math.random() * 3);
+                const sectionWidth = canvas.width / 3;
+                const maxX = sectionWidth - platformWidth;
+                xPosition = section * sectionWidth + Math.random() * maxX;
+            }
+
+            // Determine if platform should move
+            const shouldMove = !isFirst && score >= movingPlatformStartScore && Math.random() < movingPlatformChance;
+            
+            // Generate bark texture positions
+            const barkTexture = [];
+            for(let i = 0; i < 5; i++) {
+                barkTexture.push({
+                    x: platformWidth * (0.2 + Math.random() * 0.6),
+                    offset: Math.random() * 3
+                });
+            }
+
+            // Generate twig data
+            const twigs = [];
+            const numTwigs = Math.floor(platformWidth / 40);
+            for(let i = 0; i < numTwigs; i++) {
+                twigs.push({
+                    xOffset: (i + 0.5) / numTwigs,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * 20 - 10
+                });
+            }
+
+            // Generate exactly 3 leaves
+            const leaves = [];
+            
+            // First leaf at 1/4 of the branch (top)
+            leaves.push({
+                x: 0.25,
+                offsetX: Math.random() * 6 - 3,
+                topSize: 15 + Math.random() * 5,
+                bottomSize: 0,  // No bottom leaf
+                topAngle: -Math.PI/4 + (Math.random() * 0.3 - 0.15),
+                bottomAngle: 0
+            });
+
+            // Second leaf at middle of branch (bottom)
+            leaves.push({
+                x: 0.5,
+                offsetX: Math.random() * 6 - 3,
+                topSize: 0,  // No top leaf
+                bottomSize: 15 + Math.random() * 5,
+                topAngle: 0,
+                bottomAngle: Math.PI/4 + (Math.random() * 0.3 - 0.15)
+            });
+
+            // Third leaf at 3/4 of the branch (top)
+            leaves.push({
+                x: 0.75,
+                offsetX: Math.random() * 6 - 3,
+                topSize: 15 + Math.random() * 5,
+                bottomSize: 0,  // No bottom leaf
+                topAngle: -Math.PI/4 + (Math.random() * 0.3 - 0.15),
+                bottomAngle: 0
+            });
+
+            return {
+                x: xPosition,
+                y: yPosition,
+                width: isFirst ? canvas.width : platformWidth,
+                height: platformHeight,
+                leaves: leaves,
+                barkTexture: barkTexture,
+                twigs: twigs,
+                hasAcorn: !isFirst && Math.random() < acornChance,
+                acornCollected: false,
+                isBreaking: !isFirst && Math.random() < breakingBranchChance,
+                broken: false,
+                isMoving: shouldMove,
+                moveDirection: 1,  // 1 for right, -1 for left
+                originalX: xPosition,  // Store original position for movement bounds
+                isGrass: false
+            };
+        }
+
+        function checkCollision(player, platform) {
+            return player.x < platform.x + platform.width &&
+                   player.x + player.width > platform.x &&
+                   player.y + player.height > platform.y &&
+                   player.y + player.height < platform.y + platform.height &&
+                   player.velocityY > 0;
+        }
+
+        function checkAcornCollision(player, platform) {
+            // Check if player is within the platform width horizontally
+            if (player.x + player.width < platform.x || player.x > platform.x + platform.width) {
+                return false;
+            }
+
+            const floatOffset = Math.sin(timestamp * 0.08) * 8;
+            const acornY = platform.y - 15 + floatOffset;
+            
+            // Check vertical distance
+            const playerCenterY = player.y + player.height/2;
+            const verticalDistance = Math.abs(playerCenterY - acornY);
+            
+            return verticalDistance < 30;  // Vertical collection range
+        }
+
+        // Add leaf spawning function
+        function spawnBackgroundLeaf() {
+            if (backgroundLeaves.length < maxBackgroundLeaves && Math.random() < 0.005) {  // 0.5% chance each frame
+                const leafType = Math.random() < 0.5 ? '🍃' : '🍂';  // 50/50 chance for each leaf type
+                backgroundLeaves.push({
+                    x: Math.random() * canvas.width,
+                    y: -20,
+                    speedX: Math.random() * 1.5 - 0.75,
+                    speedY: 1.5 + Math.random() * 0.8,  // Increased from 0.8 + random*0.4 to 1.5 + random*0.8
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.08,
+                    leafType: leafType
+                });
+            }
+        }
+
+        function openStore() {
+            document.getElementById('storePopup').style.display = 'block';
+            document.getElementById('startScreen').style.display = 'none';
+            updateStoreUI();
+        }
+
+        function closeStore() {
+            document.getElementById('storePopup').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+        }
+
+        function updateStoreUI() {
+            const characters = document.querySelectorAll('.character-option');
+            characters.forEach(char => {
+                const emoji = char.querySelector('span').textContent;
+                if (purchasedCharacters.includes(emoji)) {
+                    char.classList.remove('locked');
+                    char.onclick = () => selectCharacter(emoji);
+                    if (emoji === selectedCharacter) {
+                        char.classList.add('selected');
+                    } else {
+                        char.classList.remove('selected');
+                    }
+                } else {
+                    char.classList.add('locked');
+                    char.classList.remove('selected');
+                }
+            });
+        }
+
+        function selectCharacter(character) {
+            if (purchasedCharacters.includes(character)) {
+                selectedCharacter = character;
+                localStorage.setItem('selectedCharacter', character);
+                updateStoreUI();
+            }
+        }
+
+        function tryPurchaseCharacter(character) {
+            if (purchasedCharacters.includes(character)) {
+                selectCharacter(character);
+                return;
+            }
+
+            const characterOption = Array.from(document.querySelectorAll('.character-option'))
+                .find(option => option.querySelector('span').textContent === character);
+            const price = parseInt(characterOption.dataset.price);
+
+            if (totalAcorns >= price) {
+                totalAcorns -= price;
+                purchasedCharacters.push(character);
+                localStorage.setItem('totalAcorns', totalAcorns);
+
+                // Add purchase animation
+                characterOption.classList.add('purchase-confirmation');
+                setTimeout(() => {
+                    characterOption.classList.remove('purchase-confirmation');
+                }, 1100);
+
+                // Add sparkle effects
+                const sparkles = ['✨', '🌟', '⭐️'];
+                sparkles.forEach((sparkle, i) => {
+                    const spark = document.createElement('div');
+                    spark.className = 'sparkle';
+                    spark.textContent = sparkle;
+                    spark.style.left = `${Math.random() * 100}%`;
+                    spark.style.animationDelay = `${i * 0.2}s`;
+                    characterOption.appendChild(spark);
+                    setTimeout(() => spark.remove(), 1000);
+                });
+                localStorage.setItem('purchasedCharacters', JSON.stringify(purchasedCharacters));
+                selectCharacter(character);
+                document.getElementById('totalAcorns').textContent = totalAcorns;
+            }
+        }
+
+        function startGame() {
+            // Initialize game if not already initialized
+            if (!canvas) {
+                initGame();
+            }
+
+            // Hide both start screen and game over popup
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameOverPopup').style.display = 'none';
+            
+            isGameRunning = true;
+            score = 0;
+            
+            // Reset player
+            if (!player) {
+                player = {
+                    x: canvas.width / 2,
+                    y: canvas.height - 50,
+                    width: 40,
+                    height: 40,
+                    velocityY: 0,
+                    speed: 10,
+                    airSpeed: 16,
+                    direction: 1,
+                    acorns: 0,
+                    jumpGrace: 0,
+                    wasOnPlatform: false
+                };
+            } else {
+                player.x = canvas.width / 2;
+                player.y = canvas.height - 50;
+                player.velocityY = 0;
+            }
+            
+            // Reset platforms
+            platforms = [];
+            platforms.push(createPlatform(true, canvas.height - 20));
+            
+            let nextY = canvas.height - 20 - minPlatformSpacing;
+            for (let i = 0; i < 6; i++) {
+                platforms.push(createPlatform(false, nextY));
+                nextY -= minPlatformSpacing;
+            }
+
+            // Draw initial frame
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw platforms
+            for (let platform of platforms) {
+                drawBranch(platform);
+            }
+            
+            // Draw player
+            drawSquirrel(player);
+            
+            // Draw score
+            ctx.fillStyle = '#2d5a27';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('Height: ' + score, 10, 30);
+
+            // Start the game loop
+            requestAnimationFrame(gameLoop);
+
+            // Clear background leaves
+            backgroundLeaves = [];
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverPopup').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+        }
+
+        // Start the game immediately
+        initGame();
+
+        // Function to draw the forest background
+        function drawForestBackground() {
+            // Update and draw clouds
+            ctx.save();
+            clouds.forEach(cloud => {
+                // Update cloud position with wrapping
+                cloud.x += cloud.speedX;
+                if (cloud.x > canvas.width + 50) {
+                    // When a cloud goes off-screen, wrap it back to the start with an offset
+                    cloud.x = -150;
+                }
+                
+                // Calculate vertical movement using sine wave with phase offset
+                const y = cloud.baseY + Math.sin(timestamp * 0.02 + cloud.phase) * cloud.amplitude;
+                
+                ctx.font = `${cloud.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.globalAlpha = cloud.alpha;
+                ctx.fillText('☁️', cloud.x, y);
+            });
+            ctx.restore();
+
+            // Draw the back hill (highest and most distant)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(-20, canvas.height);
+            ctx.bezierCurveTo(
+                canvas.width * 0.15, canvas.height - 60,  // Higher curve, shifted left
+                canvas.width * 0.85, canvas.height - 55,
+                canvas.width + 100, canvas.height - 20
+            );
+            ctx.lineTo(canvas.width + 100, canvas.height);
+            ctx.lineTo(-20, canvas.height);
+            ctx.closePath();
+            ctx.fillStyle = '#2d5a27';
+            ctx.globalAlpha = 0.15;  // Most transparent
+            ctx.fill();
+            ctx.restore();
+
+            // Draw the middle hill
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(-10, canvas.height);
+            ctx.bezierCurveTo(
+                canvas.width * 0.4, canvas.height - 50,  // Medium curve, shifted right
+                canvas.width * 0.9, canvas.height - 45,
+                canvas.width + 80, canvas.height - 15
+            );
+            ctx.lineTo(canvas.width + 80, canvas.height);
+            ctx.lineTo(-10, canvas.height);
+            ctx.closePath();
+            ctx.fillStyle = '#2d5a27';
+            ctx.globalAlpha = 0.2;  // Medium transparency
+            ctx.fill();
+            ctx.restore();
+
+            // Draw the front hill (closest)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(-15, canvas.height);
+            ctx.bezierCurveTo(
+                canvas.width * 0.25, canvas.height - 40,  // Lower curve, centered differently
+                canvas.width * 0.75, canvas.height - 35,
+                canvas.width + 60, canvas.height - 10
+            );
+            ctx.lineTo(canvas.width + 60, canvas.height);
+            ctx.lineTo(-15, canvas.height);
+            ctx.closePath();
+            ctx.fillStyle = '#2d5a27';
+            ctx.globalAlpha = 0.3;  // Least transparent
+            ctx.fill();
+            ctx.restore();
+
+            // Define all trees with animation properties
+            const backRow = [
+                { x: -20, size: 160, y: canvas.height + 15, alpha: 1, swaySpeed: 0.0001, swayAmount: 3, phase: 0 },
+                { x: 100, size: 140, y: canvas.height + 15, alpha: 1, swaySpeed: 0.0001, swayAmount: 3, phase: 1.5 },
+                { x: 220, size: 170, y: canvas.height + 15, alpha: 1, swaySpeed: 0.0001, swayAmount: 4, phase: 3 },
+                { x: 340, size: 150, y: canvas.height + 15, alpha: 1, swaySpeed: 0.0001, swayAmount: 3, phase: 4.5 }
+            ];
+            
+            const middleRow = [
+                { x: 40, size: 200, y: canvas.height + 25, alpha: 1, swaySpeed: 0.0001, swayAmount: 4, phase: 0.8 },
+                { x: 160, size: 220, y: canvas.height + 25, alpha: 1, swaySpeed: 0.0001, swayAmount: 4, phase: 2.3 },
+                { x: 280, size: 190, y: canvas.height + 25, alpha: 1, swaySpeed: 0.0001, swayAmount: 5, phase: 3.8 },
+                { x: 400, size: 210, y: canvas.height + 25, alpha: 1, swaySpeed: 0.0001, swayAmount: 4, phase: 5.3 }
+            ];
+            
+            const frontRow = [
+                { x: -30, size: 280, y: canvas.height + 35, alpha: 1, swaySpeed: 0.0001, swayAmount: 5, phase: 1.2 },
+                { x: 120, size: 300, y: canvas.height + 35, alpha: 1, swaySpeed: 0.0001, swayAmount: 5, phase: 2.7 },
+                { x: 270, size: 260, y: canvas.height + 35, alpha: 1, swaySpeed: 0.0001, swayAmount: 6, phase: 4.2 },
+                { x: 420, size: 290, y: canvas.height + 35, alpha: 1, swaySpeed: 0.0001, swayAmount: 5, phase: 5.7 }
+            ];
+
+            // Draw all trees with swaying animation
+            ctx.save();
+            const drawTreeRow = (trees) => {
+                trees.forEach(tree => {
+                    // Calculate multiple swaying components for more frequent movement
+                    const time = timestamp * tree.swaySpeed;
+                    const primarySway = Math.sin(time + tree.phase);
+                    const secondarySway = Math.sin(time * 1.5 + tree.phase * 2) * 0.5;
+                    const combinedSway = (primarySway + secondarySway) / 1.5;
+                    
+                    // Apply smooth easing
+                    const swayOffset = Math.round(tree.swayAmount * combinedSway);
+                    
+                    ctx.font = `${tree.size}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.globalAlpha = tree.alpha;
+                    ctx.fillText('🌳', tree.x + swayOffset, tree.y);
+                });
+            };
+
+            // Draw rows from back to front
+            drawTreeRow(backRow);
+            drawTreeRow(middleRow);
+            drawTreeRow(frontRow);
+            ctx.restore();
+
+            // Draw semi-transparent white overlay
+            ctx.save();
+            ctx.fillStyle = 'white';
+            ctx.globalAlpha = 0.6;  // Adjust this value to make the overlay more or less transparent
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+    </script>
+</body>
+</html>
